@@ -2,7 +2,7 @@
 import numpy as np
 from collections import namedtuple
 from sklearn.datasets import fetch_mldata
-import cPickle
+import pickle
 import sys
 import os
 from subprocess import call
@@ -26,7 +26,7 @@ class ArrayPacker(object):
 MNISTData = namedtuple("MNISTData", ["train", "test"])
 
 def get_mnist(flatten=False, onehot=False):
-    mnist = fetch_mldata('MNIST original')
+    mnist = fetch_mldata('MNIST original', data_home='./data')
     np.random.seed(1234) # set seed for deterministic ordering
     p = np.random.permutation(mnist.data.shape[0])
     X = mnist.data[p]
@@ -53,16 +53,17 @@ CIFAR10Data = namedtuple("CIFAR10Data", ["train", "test"])
 def load_batch(fpath, label_key='labels'):
     f = open(fpath, 'rb')
     if sys.version_info < (3,):
-        d = cPickle.load(f)
+        d = pickle.load(f)
     else:
-        d = cPickle.load(f, encoding="bytes")
-        # decode utf8
-        for k, v in d.items():
-            del(d[k])
-        d[k.decode("utf8")] = v
+        d = pickle.load(f, encoding="bytes")
+        # print(d.keys())
+        # # decode utf8
+        # for k, v in d.items():
+        #     # del(d[k])
+        #     d[k.decode("utf8")] = v
     f.close()
-    data = d["data"]
-    labels = d[label_key]
+    data = d["data".encode("utf8")]
+    labels = d[label_key.encode("utf8")]
 
     data = data.reshape(data.shape[0], 3, 32, 32).astype(np.float32)
     labels = np.array(labels, dtype="float32")
@@ -70,9 +71,9 @@ def load_batch(fpath, label_key='labels'):
 
 
 def get_cifar10(swap_axes=False):
-    path = "cifar-10-batches-py"
+    path = "./data/cifar-10-batches-py"
     if not os.path.exists(path):
-        tar_file = "cifar-10-python.tar.gz"
+        tar_file = "./data/cifar-10-python.tar.gz"
         origin = "http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
         if os.path.exists(tar_file):
             need_download = False
